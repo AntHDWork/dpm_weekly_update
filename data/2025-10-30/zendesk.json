@@ -1,0 +1,14 @@
+{
+  "week_ending": "2025-10-30",
+  "project_key": "zendesk",
+  "dpm": "Hariss Amin",
+  "status": "Green",
+  "delta": "Support workflow documented.",
+  "milestones": "Ticket routing config — 2025-11-09",
+  "risks": "Low: Waiting on final support category list.",
+  "metrics": "Avg. ticket response time: 2h",
+  "next7": "Pilot test with internal support team.",
+  "asks": "None.",
+  "notes": "Zendesk setup baseline.",
+  "submitted_at": "2025-11-07T09:25:00Z"
+}
