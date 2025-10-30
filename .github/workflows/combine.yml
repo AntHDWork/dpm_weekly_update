@@ -1,0 +1,33 @@
+name: Combine weekly updates
+
+on:
+  push:
+    paths:
+      - 'data/**'
+
+jobs:
+  combine:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GPT_API_KEY: ${{ secrets.GPT_API_KEY }}
+      GPT_ENDPOINT: ${{ secrets.GPT_ENDPOINT }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Determine changed week folder
+        id: week
+        run: |
+          # Find the first changed path under data/, extract the week folder (2nd segment)
+          WEEK=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^data/' | head -n1 | cut -d/ -f2)
+          echo "week=$WEEK" >> $GITHUB_OUTPUT
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run combiner
+        run: node tools/combine.mjs "${{ steps.week.outputs.week }}"
