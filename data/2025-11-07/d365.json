@@ -1,0 +1,14 @@
+{
+  "week_ending": "2025-11-07",
+  "project_key": "d365",
+  "dpm": "Karthik Gangadhara",
+  "status": "Green",
+  "delta": "Dynamics environment provisioned.",
+  "milestones": "Data model mapping — 2025-11-10",
+  "risks": "None.",
+  "metrics": "N/A",
+  "next7": "Begin connector testing.",
+  "asks": "Confirm access to staging DB.",
+  "notes": "Example D365 update.",
+  "submitted_at": "2025-11-07T09:20:00Z"
+}
