@@ -1,0 +1,99 @@
+name: Combine and email DPM updates
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'updates/**.json'
+  workflow_dispatch: {}
+
+jobs:
+  combine_and_email:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Determine latest week dir
+        id: week
+        shell: bash
+        run: |
+          if [ ! -d updates ]; then
+            echo "No updates directory found"; exit 1
+          fi
+          LATEST_DIR=$(ls -1 updates | sort | tail -n1)
+          if [ -z "$LATEST_DIR" ]; then
+            echo "No dated subfolders in updates/"; exit 1
+          fi
+          echo "dir=$LATEST_DIR" >> $GITHUB_OUTPUT
+          echo "Using week dir: $LATEST_DIR"
+
+      - name: Combine weekly JSON into one file
+        id: combine
+        run: |
+          node -e "
+            import {readdirSync, readFileSync, mkdirSync, writeFileSync} from 'node:fs';
+            const week = process.env.WEEK_DIR;
+            const dir = \`updates/\${week}\`;
+            const files = readdirSync(dir).filter(f => f.endsWith('.json')).sort();
+            if (files.length === 0) { throw new Error('No JSON files in ' + dir); }
+            const records = files.map(f => JSON.parse(readFileSync(\`\${dir}/\${f}\`, 'utf8')));
+            mkdirSync('combined', {recursive:true});
+            writeFileSync(\`combined/\${week}.json\`, JSON.stringify(records, null, 2));
+            console.log('Wrote combined/' + week + '.json with', records.length, 'records');
+          "
+        env:
+          WEEK_DIR: ${{ steps.week.outputs.dir }}
+
+      - name: Commit combined JSON
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add combined/${{ steps.week.outputs.dir }}.json
+          git commit -m "Combined updates – ${{ steps.week.outputs.dir }}" || echo "No changes to commit"
+          git push
+
+      - name: Render plaintext email body
+        id: render
+        run: |
+          node -e "
+            import {readFileSync} from 'node:fs';
+            const week = process.env.WEEK_DIR;
+            const data = JSON.parse(readFileSync(\`combined/\${week}.json\`, 'utf8'));
+            const lines = [];
+            lines.push(\`DPM Weekly Digest – \${week}\n\`);
+            for (const item of data) {
+              const dpm = item.dpm ?? 'Unknown DPM';
+              const status = item.status ?? 'Unknown';
+              lines.push(\`${dpm}: \${status}\`);
+              const bullets = [
+                ...(item.summary?.accomplishments ?? []),
+              ].slice(0,5);
+              for (const b of bullets) lines.push('- ' + b);
+              lines.push('');
+            }
+            process.stdout.write(lines.join('\\n'));
+          " > email.txt
+          echo "subject=DPM Weekly Digest – ${{ steps.week.outputs.dir }}" >> $GITHUB_OUTPUT
+        env:
+          WEEK_DIR: ${{ steps.week.outputs.dir }}
+
+      - name: Send email (SMTP)
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: ${{ steps.render.outputs.subject }}
+          to: ${{ secrets.DPM_DISTRO }}
+          from: "DPM Updates <no-reply@yourdomain>"
+          content_type: text/plain
+          body: file://email.txt
