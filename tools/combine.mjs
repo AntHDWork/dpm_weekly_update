@@ -42,20 +42,69 @@ const endpoint = process.env.GPT_ENDPOINT;
 const key = process.env.GPT_API_KEY;
 if (!endpoint || !key) fail('Missing GPT_ENDPOINT or GPT_API_KEY secrets.');
 
-// Call the GPT endpoint
-const res = await fetch(endpoint, {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${key}`,
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify(payload)
-});
-if (!res.ok) {
-  const txt = await res.text();
-  fail(`GPT call failed: ${res.status} ${res.statusText}\n${txt}`);
+// --- Call the GPT endpoint (guarded) ---
+function redactUrl(u) {
+  try {
+    const x = new URL(u);
+    x.search = '';
+    return `${x.origin}${x.pathname}`;
+  } catch {
+    return '(invalid URL)';
+  }
 }
-const out = await res.json();
+
+console.log(`[INFO] Week: ${week}`);
+console.log(`[INFO] Using GPT endpoint: ${redactUrl(endpoint)}`);
+
+let res;
+try {
+  res = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${key}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+} catch (e) {
+  fail(`Network error calling GPT endpoint ${redactUrl(endpoint)}: ${e.message}`);
+}
+
+const ct = (res.headers.get('content-type') || '').toLowerCase();
+
+if (!res.ok) {
+  const txt = await res.text().catch(() => '(failed to read body)');
+  fail(
+    `GPT call failed: ${res.status} ${res.statusText}\n` +
+    `Content-Type: ${ct}\n` +
+    `Endpoint: ${redactUrl(endpoint)}\n` +
+    `Body(head): ${txt.slice(0, 400)}`
+  );
+}
+
+if (!ct.includes('application/json')) {
+  const txt = await res.text().catch(() => '(failed to read body)');
+  fail(
+    `Expected JSON but got "${ct || 'unknown'}" from ${redactUrl(endpoint)}\n` +
+    `Status: ${res.status}\n` +
+    `Body(head): ${txt.slice(0, 400)}`
+  );
+}
+
+let out;
+try {
+  out = await res.json();
+} catch (e) {
+  const txt = await res.text().catch(() => '(failed to read body)');
+  fail(
+    `Failed to parse JSON from ${redactUrl(endpoint)}\n` +
+    `Status: ${res.status}\n` +
+    `Content-Type: ${ct}\n` +
+    `Parse error: ${e.message}\n` +
+    `Body(head): ${txt.slice(0, 400)}`
+  );
+}
+
 
 // Prepare outputs (accept either *_md or plain text fields)
 const execMD = out.executive_summary_md || out.executive_summary || 'No executive summary returned.';
