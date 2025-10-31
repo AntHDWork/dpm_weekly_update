@@ -1,0 +1,13 @@
+{
+  "weekEnding": "2025-11-02",
+  "required": [
+    "north-hub",
+    "south-hub",
+    "central-ops",
+    "delivery",
+    "strategy"
+  ],
+  "received": [],
+  "complete": false,
+  "updatedAt": "2025-10-31T19:09:39.996Z"
+}
