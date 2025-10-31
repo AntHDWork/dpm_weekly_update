@@ -1,0 +1,15 @@
+{
+  "dpm": "North Hub",
+  "weekEnding": "2025-11-02",
+  "summary": "Example submission via API.",
+  "sections": {
+    "keyProgress": [
+      "Alpha"
+    ],
+    "risks": [],
+    "nextWeek": [],
+    "requests": [],
+    "links": []
+  },
+  "rawInput": "Alpha"
+}
