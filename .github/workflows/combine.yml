@@ -48,8 +48,24 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install deps
-        run: npm ci
+           - name: Print Node & npm versions
+        run: |
+          node -v
+          npm -v
+
+      # Install only if there's something to install
+      - name: Install deps (if present)
+        run: |
+          set -euo pipefail
+          if [ -f package-lock.json ]; then
+            echo "Using npm ci"
+            npm ci
+          elif [ -f package.json ]; then
+            echo "Using npm install (no lockfile)"
+            npm install --no-audit --no-fund
+          else
+            echo "No package.json found — skipping install."
+          fi
 
       - name: Run combiner
         env:
@@ -60,7 +76,6 @@ jobs:
           WEEK="${WEEK_INPUT:-$WEEK_FALLBACK}"
           if [ -z "${WEEK:-}" ]; then
             echo "❌ No week provided and could not auto-detect from changes."
-            echo "👉 Remedy: Use manual dispatch and set input week like 2025-10-31, or touch files under data/<week>/."
             exit 1
           fi
           echo "✅ Using week: $WEEK"
