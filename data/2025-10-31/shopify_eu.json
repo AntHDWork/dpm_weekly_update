@@ -1,0 +1,14 @@
+{
+  "week_ending": "2025-10-31",
+  "project_key": "shopify_eu",
+  "dpm": "Ant Veness",
+  "status": "Green",
+  "delta": "Shopify EU setup test complete.",
+  "milestones": "Theme sync to EU store — 2025-11-08",
+  "risks": "None currently.",
+  "metrics": "Checkout conv: 2.4% (+0.3pp w/w)",
+  "next7": "Start localisation testing.",
+  "asks": "None.",
+  "notes": "EU variant baseline entry.",
+  "submitted_at": "2025-11-07T09:10:00Z"
+}
