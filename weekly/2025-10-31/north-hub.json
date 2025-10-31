@@ -1,0 +1,42 @@
+{
+  "dpm": "North Hub",
+  "weekEnding": "2025-10-31",
+  "summary": "Yotpo integration Next: Next steps - Configure on dev, validate, then promote to prod ASAP.",
+  "sections": {
+    "keyProgress": [
+      "Yotpo integration",
+      "Using Shopify’s native Yotpo app to enable Product Reviews and UGC. UGC/Reviews expected to be straightforward.",
+      "Klarna integration",
+      "Adding Klarna via Shopify.",
+      "Navigation improvements (TUISS NL style navbar)",
+      "Use NL as a case study to iterate on navigation and search usability; implement NL-style navbar.",
+      "Development on the NL-style navbar is planned with 2.8.0; estimated to begin on the 6 Nov.",
+      "Dynamic PLP Size Filtering",
+      "Adds a “sort by size” field and dynamically updates prices across PLP.",
+      "Currently in development",
+      "PDP Accordions (incl. Finer Details)",
+      "Dynamically set accordion data (product description, finer details, guides) from PC; will require some PC work - using the B2G/TUISS Multi-step PDP (this also brings other improvements e.g. feature option tags) configuration",
+      "To be developed after the new navigation work concludes.",
+      "Videos and Images (>3 images on PDP)",
+      "Videos:",
+      "Shopify’s guidance it to use YouTube URLs.",
+      "Needs sign off from global team",
+      "Images:",
+      "PC team is handling a bug in the current “hack” for more than 3 images. .",
+      "Making the Sample ATC Modular",
+      "Modular section so Sample ATC can be repositioned lower on PDP via the theme customiser.",
+      "Version: 2.6.0 (live)",
+      "Footer SMS Sign-up",
+      "Bloomreach add-on after email submission in the footer, customers see an additional option to opt into SMS.",
+      "Version: 2.6.0 (live)"
+    ],
+    "risks": [],
+    "nextWeek": [
+      "Next steps - Configure on dev, validate, then promote to prod ASAP.",
+      "Next Steps - Sylvain setting up Merchant account to enable quick install"
+    ],
+    "requests": [],
+    "links": []
+  },
+  "rawInput": "Yotpo integration\nUsing Shopify’s native Yotpo app to enable Product Reviews and UGC. UGC/Reviews expected to be straightforward.\nNext steps - Configure on dev, validate, then promote to prod ASAP.\nKlarna integration\nAdding Klarna via Shopify.\nNext Steps - Sylvain setting up Merchant account to enable quick install \nNavigation improvements (TUISS NL style navbar)\nUse NL as a case study to iterate on navigation and search usability; implement NL-style navbar.\nDevelopment on the NL-style navbar is planned with 2.8.0; estimated to begin on the 6 Nov.\nDynamic PLP Size Filtering\nAdds a “sort by size” field and dynamically updates prices across PLP.\nCurrently in development\nPDP Accordions (incl. Finer Details)\nDynamically set accordion data (product description, finer details, guides) from PC; will require some PC work - using the B2G/TUISS Multi-step PDP (this also brings other improvements e.g. feature option tags) configuration\nTo be developed after the new navigation work concludes.\nVideos and Images (>3 images on PDP)\nVideos:\nShopify’s guidance it to use YouTube URLs.\nNeeds sign off from global team\nImages:\nPC team is handling a bug in the current “hack” for more than 3 images. .\n \nMaking the Sample ATC Modular\nModular section so Sample ATC can be repositioned lower on PDP via the theme customiser.\nVersion: 2.6.0 (live)\nFooter SMS Sign-up\nBloomreach add-on after email submission in the footer, customers see an additional option to opt into SMS.\nVersion: 2.6.0 (live)"
+}
