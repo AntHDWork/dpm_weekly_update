@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Weekly Update — Submit</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --bg:#0b1220; --card:#111a2b; --text:#e9eefc; --muted:#aab6d3; --accent:#5b9bff; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background:var(--bg); color:var(--text); }
+    .wrap { max-width: 720px; margin: 48px auto; padding: 0 16px; }
+    .card { background:var(--card); border-radius:16px; padding:24px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    h1 { font-size: 22px; margin:0 0 12px; }
+    p.muted { color:var(--muted); margin-top:0; }
+    label { display:block; font-weight:600; margin:16px 0 6px; }
+    input, select, textarea { width:100%; padding:12px 14px; border-radius:10px; border:1px solid #223050; background:#0e1626; color:var(--text); }
+    textarea { min-height: 160px; }
+    .row { display:flex; gap:12px; }
+    .row > div { flex:1; }
+    button { background:var(--accent); border:none; color:white; padding:12px 16px; border-radius:10px; font-weight:700; cursor:pointer; margin-top:18px; }
+    button:disabled { opacity:.6; cursor:not-allowed; }
+    .msg { margin-top:14px; font-size:14px; }
+    .ok { color:#72ffa4; }
+    .err { color:#ff7b7b; white-space:pre-wrap; }
+    small.help { display:block; color:var(--muted); margin-top:6px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Weekly Update</h1>
+      <p class="muted">Paste your raw update. We’ll summarize and file it in the right place.</p>
+
+      <div class="row">
+        <div>
+          <label for="project">Project</label>
+          <select id="project" required>
+            <option value="">Select…</option>
+            <option>catalogue</option>
+            <option>fulfilment</option>
+            <option>shopify_eu</option>
+            <option>shopify_us</option>
+            <option>d365</option>
+            <option>zendesk</option>
+          </select>
+        </div>
+        <div>
+          <label for="week">Week ending (Fri)</label>
+          <input id="week" type="date" required />
+          <small class="help">We’ll pre-fill the upcoming Friday.</small>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="dpm">Your name</label>
+          <input id="dpm" type="text" placeholder="Jane Doe" required />
+        </div>
+        <div>
+          <label for="passcode">Team passcode</label>
+          <input id="passcode" type="password" placeholder="(provided internally)" />
+          <small class="help">Optional — API may require this.</small>
+        </div>
+      </div>
+
+      <label for="raw">Raw update (paste anything)</label>
+      <textarea id="raw" placeholder="Free text dump… milestones, risks, next week, asks, notes…"></textarea>
+
+      <button id="send">Submit update</button>
+      <div class="msg" id="msg"></div>
+    </div>
+  </div>
+
+  <script>
+    // Prefill week with the upcoming Friday (or today if today is Friday)
+    function upcomingFriday(d=new Date()) {
+      const day = d.getUTCDay(); // 0..6 (Sun..Sat)
+      const diff = (5 - day + 7) % 7; // days until Friday
+      const target = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + diff));
+      return target.toISOString().slice(0,10);
+    }
+    document.getElementById('week').value = upcomingFriday();
+
+    const $ = (id) => document.getElementById(id);
+    $('send').addEventListener('click', async () => {
+      const btn = $('send'); const msg = $('msg'); msg.className='msg'; msg.textContent='';
+      const payload = {
+        project_key: $('project').value,
+        week_ending: $('week').value,
+        dpm: $('dpm').value,
+        raw_update: $('raw').value,
+        passcode: $('passcode').value || undefined
+      };
+
+      if (!payload.project_key || !payload.week_ending || !payload.dpm) {
+        msg.classList.add('err'); msg.textContent = 'Please fill Project, Week ending and Your name.'; return;
+      }
+
+      btn.disabled = true; btn.textContent = 'Submitting…';
+      try {
+        const res = await fetch('/api/ingest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || res.statusText);
+        msg.classList.add('ok');
+        msg.textContent = `Saved for ${payload.project_key} — ${payload.week_ending}. ${data.info || ''}`;
+        $('raw').value = '';
+      } catch (e) {
+        msg.classList.add('err'); msg.textContent = String(e.message || e);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Submit update';
+      }
+    });
+  </script>
+</body>
+</html>
