@@ -1,14 +1,14 @@
 {
   "week_ending": "2025-10-31",
   "project_key": "zendesk",
-  "dpm": "Hariss Amin",
+  "dpm": "Your Name",
   "status": "Green",
-  "delta": "Support workflow documented.",
-  "milestones": "Ticket routing config — 2025-11-09",
-  "risks": "Low: Waiting on final support category list.",
-  "metrics": "Avg. ticket response time: 2h",
-  "next7": "Pilot test with internal support team.",
-  "asks": "None.",
-  "notes": "Zendesk setup baseline.",
-  "submitted_at": "2025-11-07T09:25:00Z"
+  "delta": "Zendesk workflow updates deployed successfully.",
+  "milestones": "Finalize ticket sync with D365 — 2025-11-07",
+  "risks": "Potential API throttling during bulk import; monitoring in progress.",
+  "metrics": "Average resolution time improved by 8%.",
+  "next7": "Roll out Zendesk Guide updates to EU region; train support leads.",
+  "asks": "None at this stage.",
+  "notes": "All key integrations are stable and monitoring dashboards online.",
+  "submitted_at": "2025-11-07T09:00:00Z"
 }
