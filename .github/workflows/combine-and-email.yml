@@ -86,38 +86,50 @@ jobs:
         env:
           WEEK_DIR: ${{ steps.week.outputs.dir }}
 
-      - name: Preflight SMTP DNS check
+      - name: Send email via SendGrid
+        env:
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          SENDGRID_FROM: ${{ secrets.SENDGRID_FROM }}
+          DPM_DISTRO: ${{ secrets.DPM_DISTRO }}
+          SUBJECT: ${{ steps.render.outputs.subject }}
         run: |
-          echo "Testing DNS for SMTP host..."
-          node -e "
-            const host = (process.env.SMTP_HOST || '').trim();
-            const port = parseInt(process.env.SMTP_PORT, 10);
-            console.log('Host length (trimmed):', host.length);
-            if (!host) { throw new Error('SMTP_HOST is empty after trim'); }
-            if (!Number.isInteger(port) || port <= 0) { throw new Error('Invalid SMTP_PORT'); }
-            import('node:dns').then(dns => {
-              dns.promises.lookup(host).then(res => {
-                console.log('Resolved address:', res.address);
-              }).catch(err => {
-                console.error('DNS lookup failed:', err.code, err.message);
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const apiKey = process.env.SENDGRID_API_KEY;
+            const from = process.env.SENDGRID_FROM;
+            const subject = process.env.SUBJECT || 'DPM Weekly Digest';
+            const email = fs.readFileSync('email.txt', 'utf8');
+            const to = (process.env.DPM_DISTRO || '').split(',').map(s=>s.trim()).filter(Boolean);
+
+            if(!apiKey) { console.error('Missing SENDGRID_API_KEY'); process.exit(1); }
+            if(!from) { console.error('Missing SENDGRID_FROM'); process.exit(1); }
+            if(to.length === 0) { console.error('No recipients in DPM_DISTRO'); process.exit(1); }
+
+            const payload = {
+              personalizations: [{ to: to.map(a=>({email:a})) }],
+              from: { email: from, name: 'DPM Updates' },
+              subject,
+              content: [{ type: 'text/plain', value: email }]
+            };
+
+            const url = 'https://api.sendgrid.com/v3/mail/send';
+            fetch(url, {
+              method: 'POST',
+              headers: {
+                'Authorization': 'Bearer ' + apiKey,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(payload)
+            }).then(async res => {
+              if (res.status === 202) {
+                console.log('✅ SendGrid accepted the message (202).');
+              } else {
+                const text = await res.text();
+                console.error('❌ SendGrid error:', res.status, text);
                 process.exit(1);
-              });
+              }
+            }).catch(err => {
+              console.error('❌ Network error:', err);
+              process.exit(1);
             });
           "
-        env:
-          SMTP_HOST: ${{ secrets.SMTP_HOST }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-
-
-      - name: Send email (SMTP)
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: ${{ secrets.SMTP_HOST }}
-          server_port: ${{ secrets.SMTP_PORT }}
-          secure: false
-          username: ${{ secrets.SMTP_USERNAME }}
-          password: ${{ secrets.SMTP_PASSWORD }}
-          subject: ${{ steps.render.outputs.subject }}
-          to: ${{ secrets.DPM_DISTRO }}
-          from: "DPM Updates <updates@yourdomain.com>"
-          body: file://email.txt
