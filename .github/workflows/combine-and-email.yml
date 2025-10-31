@@ -89,18 +89,25 @@ jobs:
       - name: Preflight SMTP DNS check
         run: |
           echo "Testing DNS for SMTP host..."
-          python - <<'PY'
-          import os, socket
-          host = os.environ['SMTP_HOST'].strip()
-          port = int(os.environ['SMTP_PORT'])
-          if not host:
-            raise SystemExit("SMTP_HOST is empty")
-          print("Resolving:", host)
-          print(socket.getaddrinfo(host, port))
-          PY
+          node -e "
+            const host = (process.env.SMTP_HOST || '').trim();
+            const port = parseInt(process.env.SMTP_PORT, 10);
+            console.log('Host length (trimmed):', host.length);
+            if (!host) { throw new Error('SMTP_HOST is empty after trim'); }
+            if (!Number.isInteger(port) || port <= 0) { throw new Error('Invalid SMTP_PORT'); }
+            import('node:dns').then(dns => {
+              dns.promises.lookup(host).then(res => {
+                console.log('Resolved address:', res.address);
+              }).catch(err => {
+                console.error('DNS lookup failed:', err.code, err.message);
+                process.exit(1);
+              });
+            });
+          "
         env:
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
+
 
       - name: Send email (SMTP)
         uses: dawidd6/action-send-mail@v3
