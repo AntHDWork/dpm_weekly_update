@@ -1,9 +1,18 @@
 name: Combine weekly updates
 
 on:
+  workflow_dispatch:
+    inputs:
+      week:
+        description: 'Week ending (YYYY-MM-DD), e.g. 2025-10-31'
+        required: false
+        type: string
   push:
     paths:
       - 'data/**'
+      - 'tools/**'
+      - 'schemas/**'
+      - '.github/workflows/combine.yml'
 
 jobs:
   combine:
@@ -13,21 +22,46 @@ jobs:
     env:
       GPT_API_KEY: ${{ secrets.GPT_API_KEY }}
       GPT_ENDPOINT: ${{ secrets.GPT_ENDPOINT }}
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Determine changed week folder
+      # Fallback week detection from changed paths (only used if no manual input)
+      - name: Determine changed week folder (fallback)
         id: week
         run: |
+          set -euo pipefail
           # Find the first changed path under data/, extract the week folder (2nd segment)
-          WEEK=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^data/' | head -n1 | cut -d/ -f2)
-          echo "week=$WEEK" >> $GITHUB_OUTPUT
+          CHANGES="$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" | grep '^data/' || true)"
+          if [ -n "$CHANGES" ]; then
+            WEEK="$(echo "$CHANGES" | head -n1 | cut -d/ -f2)"
+            echo "week=$WEEK" >> "$GITHUB_OUTPUT"
+            echo "Auto-detected week: $WEEK"
+          else
+            echo "week=" >> "$GITHUB_OUTPUT"
+            echo "No changes under data/, week not auto-detected."
+          fi
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci
 
       - name: Run combiner
-        run: node tools/combine.mjs "${{ steps.week.outputs.week }}"
+        env:
+          WEEK_INPUT: ${{ github.event.inputs.week }}
+          WEEK_FALLBACK: ${{ steps.week.outputs.week }}
+        run: |
+          set -euo pipefail
+          WEEK="${WEEK_INPUT:-$WEEK_FALLBACK}"
+          if [ -z "${WEEK:-}" ]; then
+            echo "❌ No week provided and could not auto-detect from changes."
+            echo "👉 Remedy: Use manual dispatch and set input week like 2025-10-31, or touch files under data/<week>/."
+            exit 1
+          fi
+          echo "✅ Using week: $WEEK"
+          node tools/combine.mjs "$WEEK"
