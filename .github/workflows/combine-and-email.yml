@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,13 +40,13 @@ jobs:
         id: combine
         run: |
           node -e "
-            import {readdirSync, readFileSync, mkdirSync, writeFileSync} from 'node:fs';
+            import { readdirSync, readFileSync, mkdirSync, writeFileSync } from 'node:fs';
             const week = process.env.WEEK_DIR;
             const dir = \`updates/\${week}\`;
             const files = readdirSync(dir).filter(f => f.endsWith('.json')).sort();
             if (files.length === 0) { throw new Error('No JSON files in ' + dir); }
             const records = files.map(f => JSON.parse(readFileSync(\`\${dir}/\${f}\`, 'utf8')));
-            mkdirSync('combined', {recursive:true});
+            mkdirSync('combined', { recursive: true });
             writeFileSync(\`combined/\${week}.json\`, JSON.stringify(records, null, 2));
             console.log('Wrote combined/' + week + '.json with', records.length, 'records');
           "
@@ -64,11 +65,11 @@ jobs:
         id: render
         run: |
           node -e "
-            import {readFileSync} from 'node:fs';
+            import { readFileSync } from 'node:fs';
             const week = process.env.WEEK_DIR;
             const data = JSON.parse(readFileSync(\`combined/\${week}.json\`, 'utf8'));
             const lines = [];
-            lines.push(\`DPM Weekly Digest – \${week}\n\`);
+            lines.push(\`DPM Weekly Digest – \${week}\\n\`);
             for (const item of data) {
               const dpm = item.dpm ?? 'Unknown DPM';
               const status = item.status ?? 'Unknown';
@@ -85,7 +86,7 @@ jobs:
         env:
           WEEK_DIR: ${{ steps.week.outputs.dir }}
 
-        - name: Preflight SMTP DNS check
+      - name: Preflight SMTP DNS check
         run: |
           echo "Testing DNS for SMTP host..."
           python - <<'PY'
@@ -101,17 +102,15 @@ jobs:
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
 
-
-        - name: Send email (SMTP)
+      - name: Send email (SMTP)
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: ${{ secrets.SMTP_HOST }}
           server_port: ${{ secrets.SMTP_PORT }}
-          secure: false            # STARTTLS on port 587
+          secure: false
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
           subject: ${{ steps.render.outputs.subject }}
           to: ${{ secrets.DPM_DISTRO }}
           from: "DPM Updates <updates@yourdomain.com>"
-          body: file://email.txt    # plaintext; remove unsupported 'content_type'
-
+          body: file://email.txt
