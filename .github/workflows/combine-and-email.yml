@@ -85,15 +85,33 @@ jobs:
         env:
           WEEK_DIR: ${{ steps.week.outputs.dir }}
 
-      - name: Send email (SMTP)
+        - name: Preflight SMTP DNS check
+        run: |
+          echo "Testing DNS for SMTP host..."
+          python - <<'PY'
+          import os, socket
+          host = os.environ['SMTP_HOST'].strip()
+          port = int(os.environ['SMTP_PORT'])
+          if not host:
+            raise SystemExit("SMTP_HOST is empty")
+          print("Resolving:", host)
+          print(socket.getaddrinfo(host, port))
+          PY
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+
+
+        - name: Send email (SMTP)
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: ${{ secrets.SMTP_HOST }}
           server_port: ${{ secrets.SMTP_PORT }}
+          secure: false            # STARTTLS on port 587
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
           subject: ${{ steps.render.outputs.subject }}
           to: ${{ secrets.DPM_DISTRO }}
-          from: "DPM Updates <no-reply@yourdomain>"
-          content_type: text/plain
-          body: file://email.txt
+          from: "DPM Updates <updates@yourdomain.com>"
+          body: file://email.txt    # plaintext; remove unsupported 'content_type'
+
