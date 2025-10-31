@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DPM Weekly Update",
+  "type": "object",
+  "required": ["weekEnding", "dpm", "projects", "summary", "status"],
+  "properties": {
+    "weekEnding": { "type": "string", "format": "date" },
+    "dpm": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "enum": ["Green", "Amber", "Red"] },
+    "projects": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "summary": {
+      "type": "object",
+      "required": ["accomplishments", "metrics", "risks", "dependencies", "nextWeek", "asks"],
+      "properties": {
+        "accomplishments": { "type": "array", "items": { "type": "string" } },
+        "metrics": { "type": "array", "items": { "type": "string" } },
+        "risks": { "type": "array", "items": { "type": "string" } },
+        "dependencies": { "type": "array", "items": { "type": "string" } },
+        "nextWeek": { "type": "array", "items": { "type": "string" } },
+        "asks": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
