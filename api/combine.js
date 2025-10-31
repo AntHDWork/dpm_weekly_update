@@ -1,37 +1,55 @@
 // api/combine.js
-// Minimal working version to confirm your Vercel API endpoint works correctly.
-// It will respond to GET and POST with predictable JSON.
-
-module.exports = async (req, res) => {
-  // Only allow POST for real use, but respond to GET so you can test in browser.
-  if (req.method === 'GET') {
-    res.status(200).json({
-      message: 'Combine endpoint reachable',
-      instructions: 'Send a POST with { run_metadata, submissions[] } to get combined summary output.'
-    });
-    return;
-  }
-
-  if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Method not allowed. Use POST.' });
-    return;
-  }
-
+export default async function handler(req, res) {
   try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    const { run_metadata = {}, submissions = [] } = body || {};
+    // BASIC AUTH (Authorization: Bearer <token>)
+    const auth = req.headers.authorization || '';
+    const requiredKey = process.env.API_KEY; // set in Vercel → Project → Settings → Environment Variables
+    if (requiredKey && auth !== `Bearer ${requiredKey}`) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
 
-    const week = run_metadata.week_ending || 'UNKNOWN';
-    const projectCount = submissions.length;
+    if (req.method !== 'POST') {
+      return res.status(200).json({ ok: true, info: 'POST JSON with { run_metadata, submissions }' });
+    }
 
-    // Dummy combined output for now
-    const executive_summary_md = `**Executive Summary — ${week}**\nReceived ${projectCount} project updates.`;
-    const combined_update_md = submissions
-      .map((s, i) => `**${i + 1}. ${s.project_key || 'Unknown Project'}** — ${s.dpm || 'Unknown DPM'}`)
-      .join('\n');
+    // Parse body safely (Vercel may or may not parse for you)
+    let payload = req.body;
+    if (!payload || typeof payload !== 'object') {
+      const txt = await new Promise(resolve => {
+        let d = ''; req.on('data', c => d += c);
+        req.on('end', () => resolve(d));
+      });
+      payload = txt ? JSON.parse(txt) : {};
+    }
 
-    res.status(200).json({ executive_summary_md, combined_update_md });
+    const week = payload?.run_metadata?.week_ending || 'unknown-week';
+    const submissions = Array.isArray(payload?.submissions) ? payload.submissions : [];
+
+    // Naive summary builder (stub) — replace with your real LLM call later
+    const lines = submissions.map(s => {
+      const key = s.project_key || 'unknown';
+      const status = s.status || s.delta || 'update';
+      return `- **${key}** — ${status}`;
+    });
+
+    const executive = [
+      `**Executive Summary — ${week}**`,
+      submissions.length === 6 ? 'All six submissions received.' : `Received ${submissions.length}/6.`,
+      ...lines
+    ].join('\n');
+
+    const combined = [
+      `**Combined Update — ${week}**`,
+      ...submissions.map(s => `### ${s.project_key}\n- Status: ${s.status || 'n/a'}\n- Delta: ${s.delta || 'n/a'}\n- Risks: ${s.risks || 'n/a'}\n- Next7: ${s.next7 || 'n/a'}`)
+    ].join('\n\n');
+
+    return res.status(200).json({
+      ok: true,
+      executive_summary_md: executive,
+      combined_update_md: combined
+    });
   } catch (err) {
-    res.status(400).json({ error: 'Bad request', detail: String(err.message || err) });
+    console.error(err);
+    return res.status(500).json({ error: 'Server error', details: String(err?.message || err) });
   }
-};
+}
