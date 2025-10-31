@@ -49,7 +49,7 @@ async function summarizeToFlat({ raw, project_key, week_ending, dpm }) {
   // Prefer OpenAI-compatible enterprise endpoint if configured
   const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL;  // e.g. https://api.openai.com
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-  const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-5';
   const OPENAI_ORG = process.env.OPENAI_ORG_ID || '';     // optional
   const OPENAI_PROJECT = process.env.OPENAI_PROJECT_ID || ''; // optional
   // ...
