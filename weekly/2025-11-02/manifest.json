@@ -7,7 +7,13 @@
     "delivery",
     "strategy"
   ],
-  "received": [],
+  "received": [
+    {
+      "slug": "north-hub",
+      "file": "weekly/2025-11-02/north-hub.json",
+      "timestamp": "2025-10-31T19:09:44.137Z"
+    }
+  ],
   "complete": false,
-  "updatedAt": "2025-10-31T19:09:39.996Z"
+  "updatedAt": "2025-10-31T19:09:44.137Z"
 }
