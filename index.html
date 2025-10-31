@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>DPM Weekly Update — Prototype</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0f1220;
+      --panel: #15182a;
+      --panel-2: #1b2038;
+      --text: #e9ecf3;
+      --muted: #a9b2c7;
+      --accent: #6aa6ff;
+      --accent-2: #45d1b3;
+      --danger: #ff6b6b;
+      --border: #2a3151;
+      --ok: #40c463;
+      --pending: #ffd166;
+      --btn: #2a5bd7;
+      --btn-hover: #1f49b3;
+      --btn-sec: #2a3151;
+      --btn-sec-hover: #373f67;
+      --code: #0b0e1a;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      background: linear-gradient(120deg, #0d1020, #0b1224);
+      color: var(--text);
+      font: 15px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      margin: 0; padding: 24px;
+    }
+    .app {
+      max-width: 1080px; margin: 0 auto;
+      display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px;
+    }
+    h1 { font-size: 20px; margin: 0 0 12px; letter-spacing: 0.2px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 16px 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    label { display: block; font-weight: 600; margin: 10px 0 6px; }
+    .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    input[type="text"], input[type="date"], select, textarea {
+      width: 100%; color: var(--text); background: var(--panel-2);
+      border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+      outline: none; transition: border .15s ease, box-shadow .15s ease;
+    }
+    textarea { min-height: 160px; resize: vertical; }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(106,166,255,0.15);
+    }
+    .row { display: flex; gap: 10px; }
+    .row > * { flex: 1; }
+    .buttons { display: flex; gap: 10px; margin-top: 14px; }
+    .btn {
+      appearance: none; border: 0; padding: 10px 14px; border-radius: 10px;
+      font-weight: 600; cursor: pointer; color: white; background: var(--btn);
+      transition: transform .02s ease, background .15s ease, box-shadow .15s ease;
+      box-shadow: 0 6px 16px rgba(42,91,215,0.35);
+    }
+    .btn:hover { background: var(--btn-hover); }
+    .btn:active { transform: translateY(1px); }
+    .btn.sec { background: var(--btn-sec); box-shadow: none; }
+    .btn.sec:hover { background: var(--btn-sec-hover); }
+    .btn.danger { background: var(--danger); }
+    .status {
+      display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12px;
+      padding: 6px 8px; border-radius: 999px; background: rgba(69,209,179,0.1); color: var(--accent-2);
+      border: 1px solid rgba(69,209,179,0.25);
+    }
+    .panel-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    pre {
+      background: var(--code); color: #d9e2ff; border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px; overflow: auto; font-family: var(--mono); font-size: 12px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }
+    .pill { padding: 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .ok { background: rgba(64,196,99,0.2); color: #b9ffd0; border: 1px solid rgba(64,196,99,0.35); }
+    .pending { background: rgba(255,209,102,0.15); color: #ffe7a1; border: 1px solid rgba(255,209,102,0.25); }
+    .error { color: #ffb4b4; font-weight: 600; margin-top: 6px; }
+    .muted { color: var(--muted); }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 980px) { .app { grid-template-columns: 1fr; } .two-col{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Left: Form -->
+    <div class="card">
+      <div class="panel-title">
+        <h1>Weekly Update Capture</h1>
+        <span class="status">Prototype</span>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <label for="dpm">DPM Name</label>
+          <select id="dpm" required>
+            <option value="" selected disabled>Select your DPM</option>
+          </select>
+          <div class="hint">Locked to configured roster.</div>
+        </div>
+
+        <div>
+          <label for="date">Week Ending Date</label>
+          <input type="date" id="date" required />
+          <div class="hint">Pick the ISO week-ending date.</div>
+        </div>
+      </div>
+
+      <label for="updates">Main Updates</label>
+      <textarea id="updates" placeholder="Write in plain text. Include highlights, milestones, risks/blockers, next week focus, asks, links."></textarea>
+
+      <div id="formError" class="error" style="display:none;"></div>
+
+      <div class="buttons">
+        <button id="summariseBtn" class="btn">Summarise &amp; Review</button>
+        <button id="resetBtn" class="btn sec">Reset Form</button>
+      </div>
+    </div>
+
+    <!-- Right: Review & Checklist -->
+    <div class="card">
+      <div class="panel-title">
+        <h1>Review &amp; Checklist</h1>
+        <span class="muted">Appears after “Summarise &amp; Review”</span>
+      </div>
+
+      <div id="reviewPanel" style="display:none;">
+        <h3 style="margin:0 0 8px;">JSON Preview</h3>
+        <pre id="jsonPreview">{}</pre>
+
+        <div class="buttons">
+          <button id="submitBtn" class="btn">Submit to Repo</button>
+          <button id="editBtn" class="btn sec">Edit Inputs</button>
+          <button id="restartBtn" class="btn sec">Restart</button>
+        </div>
+
+        <h3 style="margin:12px 0 6px;">Submission Checklist</h3>
+        <div class="muted" id="checklistDate"></div>
+        <table id="checklistTable">
+          <thead>
+            <tr><th>DPM</th><th>Status</th><th>Timestamp</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div id="placeholderPanel" class="muted">
+        Run “Summarise & Review” to see your generated JSON and the checklist.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Set API_BASE later (Step 2). For now, leave as empty string to keep prototype self-contained.
+    const API_BASE = "";
+
+    const slugRoster = [
+      { label: "North Hub", slug: "north-hub" },
+      { label: "South Hub", slug: "south-hub" },
+      { label: "Central Ops", slug: "central-ops" },
+      { label: "Delivery", slug: "delivery" },
+      { label: "Strategy", slug: "strategy" }
+    ];
+
+    // In-memory “repo” for prototype
+    const repo = {
+      files: new Map(),
+      write(path, content) { this.files.set(path, content); },
+      read(path) { return this.files.get(path); },
+      exists(path) { return this.files.has(path); },
+      list(prefix) {
+        const out = [];
+        for (const [k,v] of this.files.entries()) if (k.startsWith(prefix)) out.push(k);
+        return out;
+      }
+    };
+
+    const $ = sel => document.querySelector(sel);
+    function setWeekEndingDefault(input) {
+      const now = new Date();
+      const day = now.getDay(); // 0=Sun
+      const diffToSunday = (7 - day) % 7;
+      const end = new Date(now);
+      end.setDate(now.getDate() + diffToSunday);
+      input.value = end.toISOString().slice(0,10);
+    }
+
+    function validateForm() {
+      const dpm = $("#dpm").value;
+      const date = $("#date").value;
+      const updates = $("#updates").value.trim();
+      const errors = [];
+      if (!dpm) errors.push("Select a DPM from the list.");
+      if (!date) errors.push("Choose a week ending date.");
+      if (!updates) errors.push("Enter your main updates.");
+      return { ok: errors.length === 0, errors, dpm, date, updates };
+    }
+
+    function summariseToJson({ dpm, date, updates }) {
+      const lines = updates.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      const buckets = { keyProgress:[], risks:[], nextWeek:[], requests:[], links:[] };
+
+      for (const line of lines) {
+        const low = line.toLowerCase();
+        if (low.startsWith("risk") || low.includes("risk") || low.includes("blocker")) buckets.risks.push(line);
+        else if (low.startsWith("next") || low.includes("next week")) buckets.nextWeek.push(line);
+        else if (low.startsWith("ask") || low.includes("need ") || low.includes("support")) buckets.requests.push(line);
+        else if (low.includes("http://") || low.includes("https://")) buckets.links.push(line);
+        else buckets.keyProgress.push(line);
+      }
+
+      const summary = [
+        buckets.keyProgress[0] || "Progress made on key deliverables.",
+        buckets.risks[0] ? ("Risk: " + buckets.risks[0]) : null,
+        buckets.nextWeek[0] ? ("Next: " + buckets.nextWeek[0]) : null
+      ].filter(Boolean).join(" ");
+
+      return {
+        dpm: slugRoster.find(x => x.slug === dpm)?.label || dpm,
+        weekEnding: date,
+        summary,
+        sections: buckets,
+        rawInput: updates
+      };
+    }
+
+    function pretty(obj){ return JSON.stringify(obj, null, 2); }
+
+    function manifestPath(date) { return `weekly/${date}/manifest.json`; }
+    function dpmPath(date, slug) { return `weekly/${date}/${slug}.json`; }
+
+    function loadManifest(date) {
+      const path = manifestPath(date);
+      if (!repo.exists(path)) {
+        const manifest = {
+          weekEnding: date,
+          required: slugRoster.map(x => x.slug),
+          received: [],
+          complete: false,
+          updatedAt: new Date().toISOString()
+        };
+        repo.write(path, JSON.stringify(manifest, null, 2));
+      }
+      return JSON.parse(repo.read(path));
+    }
+
+    function updateManifest(date, slug) {
+      const m = loadManifest(date);
+      const existing = m.received.find(r => r.slug === slug);
+      const entry = {
+        slug,
+        file: dpmPath(date, slug),
+        timestamp: new Date().toISOString()
+      };
+      if (existing) Object.assign(existing, entry); else m.received.push(entry);
+      const have = new Set(m.received.map(r => r.slug));
+      const need = new Set(m.required);
+      m.complete = (m.required.length === have.size) && [...need].every(s => have.has(s));
+      m.updatedAt = new Date().toISOString();
+      repo.write(manifestPath(date), JSON.stringify(m, null, 2));
+      return m;
+    }
+
+    function renderChecklist(date) {
+      const m = loadManifest(date);
+      $("#checklistDate").textContent = `Week ending ${date} — ${m.received.length}/${m.required.length} submitted${m.complete ? " (complete)" : ""}`;
+      const body = $("#checklistTable tbody");
+      body.innerHTML = "";
+      const index = Object.fromEntries(m.received.map(r => [r.slug, r]));
+      for (const slug of m.required) {
+        const rec = index[slug];
+        const tr = document.createElement("tr");
+        const label = slugRoster.find(x=>x.slug===slug)?.label || slug;
+        tr.innerHTML = `
+          <td>${label} <span class="muted" style="font-size:12px;">(${slug})</span></td>
+          <td>${rec ? '<span class="pill ok">✅ Submitted</span>' : '<span class="pill pending">⏳ Pending</span>'}</td>
+          <td class="muted">${rec ? new Date(rec.timestamp).toLocaleString() : "-"}</td>
+        `;
+        body.appendChild(tr);
+      }
+    }
+
+    // Populate roster dropdown
+    const dpmSel = $("#dpm");
+    for (const r of slugRoster) {
+      const opt = document.createElement("option");
+      opt.value = r.slug;
+      opt.textContent = r.label;
+      dpmSel.appendChild(opt);
+    }
+
+    // Default week ending date
+    setWeekEndingDefault($("#date"));
+
+    // Buttons
+    $("#resetBtn").addEventListener("click", () => {
+      $("#dpm").value = "";
+      setWeekEndingDefault($("#date"));
+      $("#updates").value = "";
+      $("#formError").style.display = "none";
+      $("#placeholderPanel").style.display = "";
+      $("#reviewPanel").style.display = "none";
+    });
+
+    $("#summariseBtn").addEventListener("click", async () => {
+      const v = validateForm();
+      if (!v.ok) {
+        $("#formError").textContent = v.errors.join("  •  ");
+        $("#formError").style.display = "";
+        return;
+      }
+      $("#formError").style.display = "none";
+
+      const json = summariseToJson({ dpm: v.dpm, date: v.date, updates: v.updates });
+      window.__pendingJSON = { slug: v.dpm, date: v.date, json };
+
+      $("#jsonPreview").textContent = pretty(json);
+      $("#placeholderPanel").style.display = "none";
+      $("#reviewPanel").style.display = "";
+      renderChecklist(v.date);
+    });
+
+    $("#editBtn").addEventListener("click", () => {
+      $("#placeholderPanel").style.display = "none";
+      $("#reviewPanel").style.display = "";
+    });
+
+    $("#restartBtn").addEventListener("click", () => {
+      $("#dpm").value = "";
+      setWeekEndingDefault($("#date"));
+      $("#updates").value = "";
+      $("#placeholderPanel").style.display = "";
+      $("#reviewPanel").style.display = "none";
+      window.__pendingJSON = null;
+    });
+
+    $("#submitBtn").addEventListener("click", async () => {
+      const pending = window.__pendingJSON;
+      if (!pending) return;
+      const { slug, date, json } = pending;
+
+      const path = dpmPath(date, slug);
+      repo.write(path, JSON.stringify(json, null, 2));
+
+      const manifest = updateManifest(date, slug);
+      renderChecklist(date);
+
+      if (manifest.complete) {
+        const files = repo.list(`weekly/${date}/`).filter(p => !p.endsWith("manifest.json"));
+        const combined = [];
+        for (const p of files) combined.push(JSON.parse(repo.read(p)));
+        const rollup = { weekEnding: date, count: combined.length, updates: combined };
+        repo.write(`weekly/${date}/combined.json`, JSON.stringify(rollup, null, 2));
+        alert("All DPMs submitted. Combine + Email would run now (simulated).");
+      } else {
+        alert("Submitted. Waiting for remaining DPMs before combine/email.");
+      }
+    });
+  </script>
+</body>
+</html>
