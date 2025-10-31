@@ -42,6 +42,11 @@ jobs:
             echo "No changes under data/, week not auto-detected."
           fi
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Print Node & npm versions
         run: |
           node -v
@@ -67,8 +72,8 @@ jobs:
         run: |
           set -euo pipefail
           WEEK="${WEEK_INPUT:-$WEEK_FALLBACK}"
-          
-        # If still empty, choose the latest existing week folder under data/
+
+          # If still empty, choose the latest existing week folder under data/
           if [ -z "${WEEK:-}" ] && [ -d data ]; then
             CANDIDATE="$(ls -1 data | grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' | sort | tail -n1 || true)"
             if [ -n "$CANDIDATE" ] && [ -d "data/$CANDIDATE" ]; then
@@ -76,7 +81,6 @@ jobs:
               echo "ℹ️  Falling back to latest existing week: $WEEK"
             fi
           fi
-
 
           if [ -z "${WEEK:-}" ]; then
             echo "::notice ::No week provided and no changes under data/. Skipping run (success)."
