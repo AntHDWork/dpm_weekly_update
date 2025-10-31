@@ -48,7 +48,7 @@ jobs:
         with:
           node-version: 20
 
-           - name: Print Node & npm versions
+      - name: Print Node & npm versions
         run: |
           node -v
           npm -v
