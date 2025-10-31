@@ -47,13 +47,31 @@ function flatTemplate({ project_key, week_ending, dpm, status='Green', delta='',
 // ----- LLM summarization -----
 async function summarizeToFlat({ raw, project_key, week_ending, dpm }) {
   // Prefer OpenAI-compatible enterprise endpoint if configured
-  const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL;  // e.g. https://your-enterprise-endpoint/openai
+  const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL;  // e.g. https://api.openai.com
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-  const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini'; // set to your approved model
-
-  const INTERNAL_LLM_ENDPOINT = process.env.INTERNAL_LLM_ENDPOINT;
-  const INTERNAL_LLM_KEY = process.env.INTERNAL_LLM_KEY;
-
+  const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  const OPENAI_ORG = process.env.OPENAI_ORG_ID || '';     // optional
+  const OPENAI_PROJECT = process.env.OPENAI_PROJECT_ID || ''; // optional
+  // ...
+  const r = await fetch(`${OPENAI_BASE_URL.replace(/\/+$/,'')}/v1/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
+      ...(OPENAI_ORG ? { 'OpenAI-Organization': OPENAI_ORG } : {}),
+      ...(OPENAI_PROJECT ? { 'OpenAI-Project': OPENAI_PROJECT } : {})
+    },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user }
+      ],
+      temperature: 0.2
+    })
+  });
+  
   const system = [
     'You convert raw weekly project updates into a strict JSON object.',
     'Output ONLY JSON. No markdown, no code fences.',
