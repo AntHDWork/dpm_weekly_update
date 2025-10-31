@@ -12,5 +12,4 @@ export default async function handler(req, res) {
   });
 }
 
-// Optional: force Node 20 for this function
-export const config = { runtime: 'nodejs20.x' };
+export const config = { runtime: 'nodejs' }; // ✅ valid
